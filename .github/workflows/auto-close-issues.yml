@@ -1,24 +1,18 @@
-name: Auto Close Issues
+name: Auto-Close Issues
 
 on:
   issues:
     types: [labeled]
 
 jobs:
-  auto-close:
+  close-issue:
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.issue.labels.*.name, 'completed') ||
-      contains(github.event.issue.labels.*.name, 'wontfix')
+    permissions:
+      issues: write
     steps:
-      - name: Close issue
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              state: 'closed'
-            })
+      - name: Close issue if labeled completed or wontfix
+        if: github.event.label.name == 'completed' || github.event.label.name == 'wontfix'
+        run: |
+          gh issue close ${{ github.event.issue.number }} --reason "not planned"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
