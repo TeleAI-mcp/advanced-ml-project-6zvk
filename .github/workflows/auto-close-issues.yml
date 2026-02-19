@@ -1,4 +1,4 @@
-name: Auto-Close Issues
+name: Auto Close Issues
 
 on:
   issues:
@@ -7,12 +7,12 @@ on:
 jobs:
   close-issue:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
     steps:
       - name: Close issue if labeled completed or wontfix
-        if: github.event.label.name == 'completed' || github.event.label.name == 'wontfix'
+        if: contains(github.event.label.name, 'completed') || contains(github.event.label.name, 'wontfix')
         run: |
-          gh issue close ${{ github.event.issue.number }} --reason "not planned"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          curl -X PATCH \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }} \
+          -d '{"state": "closed"}'
